@@ -1,0 +1,23 @@
+{
+  "pins" : [
+    {
+      "identity" : "request-operation-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/CruGlobal/request-operation-ios.git",
+      "state" : {
+        "revision" : "165a4124e396214b759e40f1e4e69575d2a257f2",
+        "version" : "1.5.1"
+      }
+    },
+    {
+      "identity" : "weather-app-kotlin",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/levieggertcru/weather-app-kotlin.git",
+      "state" : {
+        "revision" : "f3197f6e590622df491af3afb98c39c901584f42",
+        "version" : "0.4.0"
+      }
+    }
+  ],
+  "version" : 2
+}
