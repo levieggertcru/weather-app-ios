@@ -33,7 +33,7 @@ class URLSessionNetworkRequester: NetworkRequesterInterface {
         return URLSession(configuration: configuration)
     }
     
-    func sendGetRequest(url: String, completion: @escaping (_ jsonObjects: [[String : Any]]) -> Void) {
+    func sendGetRequest(url: String, completion: @escaping (_ jsonObjects: [[String : Any]]) -> Void) -> CancellableInterface {
         
         let urlRequest: URLRequest = requestBuilder.build(
             session: ignoreCacheSession,
@@ -75,6 +75,8 @@ class URLSessionNetworkRequester: NetworkRequesterInterface {
         let queue = OperationQueue()
         
         queue.addOperations([requestOperation], waitUntilFinished: false)
+        
+        return CancellableNetworkRequest(queue: queue)
     }
     
     private func getJsonObject(data: Data?, options: JSONSerialization.ReadingOptions = []) -> Result<Any?, Error> {

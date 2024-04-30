@@ -69,6 +69,17 @@ struct CurrentWeatherView: View {
                     .fill(Color.clear)
                     .frame(height: 15)
                 
+                HStack(alignment: .center, spacing: 0) {
+                    Text(viewModel.latestSearches)
+                        .foregroundColor(.black)
+                        .font(Font.system(size: 16))
+                }
+                .padding([.leading, .trailing], contentHorizontalPadding)
+                
+                Rectangle()
+                    .fill(Color.clear)
+                    .frame(height: 15)
+                
                 VStack(alignment: .leading, spacing: 10) {
                     
                     HStack(alignment: .center, spacing: 10) {
