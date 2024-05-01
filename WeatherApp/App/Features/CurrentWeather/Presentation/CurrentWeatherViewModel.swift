@@ -44,19 +44,28 @@ class CurrentWeatherViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .assign(to: &$latestWeatherSearches)
         
+        Publishers.CombineLatest(
+            $zipCodeTextInput.eraseToAnyPublisher(),
+            $latestWeatherSearches.eraseToAnyPublisher()
+        )
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] (zipCode: String, latestWeatherSearches: [WeatherSearchDomainModel]) in
+            
+            if let searchedWeather = latestWeatherSearches.first(where: {$0.zipCode == zipCode}) {
+                self?.selectedWeatherSearch = searchedWeather
+            }
+        }
+        .store(in: &cancellables)
+        
         $searchZipCode
             .eraseToAnyPublisher()
             .flatMap({ [weak self] (zipCode: String) -> AnyPublisher<[CurrentWeatherDomainModel], Never> in
                 
                 self?.isLoadingWeather = true
                 
-                let isValid: Bool = self?.validateZipCode(zipCode: zipCode) ?? false
+                let isValidZipCode: Bool = self?.validateZipCode(zipCode: zipCode) ?? false
                 
-                if isValid {
-                    
-                    if let searchedWeather = self?.latestWeatherSearches.first(where: {$0.zipCode == zipCode}) {
-                        self?.selectedWeatherSearch = searchedWeather
-                    }
+                if isValidZipCode {
                     
                     return Publishers.FlowWrapperNeverPublisher(flowWrapper: searchCurrentWeatherUseCase.search(zipCode: zipCode))
                         .eraseToAnyPublisher()
