@@ -7,56 +7,87 @@
 
 import Foundation
 import shared
+import Combine
 
 class CurrentWeatherViewModel: ObservableObject {
     
-    private let getCurrentWeatherUseCase: GetCurrentWeatherUseCase
-    private let getSearchedWeatherUseCase: GetSearchedWeatherUseCase
+    private static let fortLauderdaleZipCode: String = "33304"
     
-    private var getCurrentWeatherCancellable: CancellableInterface?
-    private var getSearchedWeatherCancellable: CancellableInterface?
+    private let searchCurrentWeatherUseCase: SearchCurrentWeatherUseCase
+    private let getLatestWeatherSearchesUseCase: GetLatestWeatherSearchesUseCase
+
+    private var cancellables: Set<AnyCancellable> = Set()
+        
+    @Published private var searchZipCode: String = ""
     
     @Published var currentWeather: CurrentWeatherDomainModel
     @Published var isLoadingWeather: Bool = false
-    @Published var latestSearches: String = ""
+    @Published var latestWeatherSearches: [WeatherSearchDomainModel] = Array()
+    @Published var selectedWeatherSearch: WeatherSearchDomainModel?
+    @Published var zipCodeTextInput: String = ""
     
-    init(getCurrentWeatherUseCase: GetCurrentWeatherUseCase, getSearchedWeatherUseCase: GetSearchedWeatherUseCase) {
+    init(searchCurrentWeatherUseCase: SearchCurrentWeatherUseCase, getLatestWeatherSearchesUseCase: GetLatestWeatherSearchesUseCase) {
         
-        self.getCurrentWeatherUseCase = getCurrentWeatherUseCase
-        self.getSearchedWeatherUseCase = getSearchedWeatherUseCase
+        self.searchCurrentWeatherUseCase = searchCurrentWeatherUseCase
+        self.getLatestWeatherSearchesUseCase = getLatestWeatherSearchesUseCase
         
         currentWeather = CurrentWeatherDomainModel(city: "", state: "", temperatureInFahrenheit: "")
         
-        searchCurrentWeather(zipCode: "33304")
+        zipCodeTextInput = CurrentWeatherViewModel.fortLauderdaleZipCode
+        searchZipCode = CurrentWeatherViewModel.fortLauderdaleZipCode
         
-        getSearchedWeatherCancellable = getSearchedWeatherUseCase
-            .getLatestSearches { [weak self] (value: KotlinInt) in
-                print("new search value: \(value)")
-                self?.latestSearches = "latest searches: \(value)"
+        Publishers.FlowWrapperNeverPublisher(flowWrapper: getLatestWeatherSearchesUseCase.getSearches())
+            .eraseToAnyPublisher()
+            .map {
+                $0.last?.weatherSearches ?? Array()
             }
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$latestWeatherSearches)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
-            print("-> cancel search")
-            self?.getSearchedWeatherCancellable?.cancel()
-        }
-    }
-    
-    deinit {
-        
-        getCurrentWeatherCancellable?.cancel()
-        getSearchedWeatherCancellable?.cancel()
-    }
-    
-    private func searchCurrentWeather(zipCode: String) {
-        
-        isLoadingWeather = true
-        
-        getCurrentWeatherCancellable = getCurrentWeatherUseCase.getCurrentWeather(zipCode: zipCode) { [weak self] (currentWeather: CurrentWeatherDomainModel) in
-            DispatchQueue.main.async { [weak self] in
-                self?.currentWeather = currentWeather
+        $searchZipCode
+            .eraseToAnyPublisher()
+            .flatMap({ [weak self] (zipCode: String) -> AnyPublisher<[CurrentWeatherDomainModel], Never> in
+                
+                self?.isLoadingWeather = true
+                
+                let isValid: Bool = self?.validateZipCode(zipCode: zipCode) ?? false
+                
+                if isValid {
+                    
+                    if let searchedWeather = self?.latestWeatherSearches.first(where: {$0.zipCode == zipCode}) {
+                        self?.selectedWeatherSearch = searchedWeather
+                    }
+                    
+                    return Publishers.FlowWrapperNeverPublisher(flowWrapper: searchCurrentWeatherUseCase.search(zipCode: zipCode))
+                        .eraseToAnyPublisher()
+                }
+                else {
+                    
+                    return Just([])
+                        .eraseToAnyPublisher()
+                }
+            })
+            .map {
+                $0.last
+            }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] (currentWeather: CurrentWeatherDomainModel?) in
+                
+                if let currentWeather = currentWeather {
+                    self?.currentWeather = currentWeather
+                }
+                
                 self?.isLoadingWeather = false
             }
-        }
+            .store(in: &cancellables)
+        
+    }
+    
+    private func validateZipCode(zipCode: String) -> Bool {
+        
+        let isValid: Bool = zipCode.count == 5
+        
+        return isValid
     }
 }
 
@@ -66,6 +97,17 @@ extension CurrentWeatherViewModel {
     
     func userDidSearchCurrentWeather(zipCode: String) {
         
-        searchCurrentWeather(zipCode: zipCode)
+        searchZipCode = zipCode
+        
+        zipCodeTextInput = zipCode
+    }
+    
+    func latestWeatherSearchTapped(weatherSearch: WeatherSearchDomainModel) {
+        
+        selectedWeatherSearch = weatherSearch
+        
+        searchZipCode = weatherSearch.zipCode
+        
+        zipCodeTextInput = weatherSearch.zipCode
     }
 }

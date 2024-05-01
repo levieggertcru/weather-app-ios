@@ -18,8 +18,8 @@ struct WeatherApp: App {
             )
             
             let viewModel = CurrentWeatherViewModel(
-                getCurrentWeatherUseCase: appDiContainer.feature.currentWeather.domainLayer.getCurrentWeatherUseCase(),
-                getSearchedWeatherUseCase: appDiContainer.feature.currentWeather.domainLayer.getSearchedWeatherUseCase()
+                searchCurrentWeatherUseCase: appDiContainer.feature.currentWeather.domainLayer.getSearchCurrentWeatherUseCase(),
+                getLatestWeatherSearchesUseCase: appDiContainer.feature.currentWeather.domainLayer.getLatestWeatherSearchesUseCase()
             )
             
             CurrentWeatherView(

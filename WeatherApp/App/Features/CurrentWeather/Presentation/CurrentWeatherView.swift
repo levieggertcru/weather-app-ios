@@ -6,14 +6,13 @@
 //
 
 import SwiftUI
+import shared
 
 struct CurrentWeatherView: View {
     
     private let contentHorizontalPadding: CGFloat = 30
     
     @ObservedObject private var viewModel: CurrentWeatherViewModel
-    
-    @State private var zipCodeInput: String = ""
     
     init(viewModel: CurrentWeatherViewModel) {
         
@@ -30,7 +29,7 @@ struct CurrentWeatherView: View {
                     .frame(height: 50)
                     .foregroundColor(Color.clear)
                 
-                Text("Page Header")
+                Text("Current Weather")
                     .font(Font.system(size: 18))
                     .foregroundColor(.black)
                     .multilineTextAlignment(.leading)
@@ -45,7 +44,7 @@ struct CurrentWeatherView: View {
                 
                 HStack(alignment: .center, spacing: 10) {
                     
-                    TextField("", text: $zipCodeInput)
+                    TextField("", text: $viewModel.zipCodeTextInput)
                         .font(Font.system(size: 20))
                         .foregroundColor(.black)
                         .textInputAutocapitalization(.never)
@@ -55,7 +54,7 @@ struct CurrentWeatherView: View {
                         .padding([.leading], contentHorizontalPadding)
                     
                     ConfirmZipButton(viewModel: viewModel, tappedClosure: {
-                        viewModel.userDidSearchCurrentWeather(zipCode: zipCodeInput)
+                        viewModel.userDidSearchCurrentWeather(zipCode: viewModel.zipCodeTextInput)
                     })
                     
                     if viewModel.isLoadingWeather {
@@ -69,12 +68,10 @@ struct CurrentWeatherView: View {
                     .fill(Color.clear)
                     .frame(height: 15)
                 
-                HStack(alignment: .center, spacing: 0) {
-                    Text(viewModel.latestSearches)
-                        .foregroundColor(.black)
-                        .font(Font.system(size: 16))
-                }
-                .padding([.leading, .trailing], contentHorizontalPadding)
+                LatestWeatherSearchesView(
+                    viewModel: viewModel,
+                    contentHorizontalPadding: contentHorizontalPadding
+                )
                 
                 Rectangle()
                     .fill(Color.clear)

@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/levieggertcru/weather-app-kotlin.git",
       "state" : {
-        "revision" : "8c3af836c458f9e9656e9555ed3bb68faa3ecb3a",
-        "version" : "0.4.5"
+        "revision" : "f32d70a7888e882f2449ab050902b43f8c8c11dc",
+        "version" : "0.6.4"
       }
     }
   ],
